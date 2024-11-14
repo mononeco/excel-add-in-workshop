@@ -3,7 +3,7 @@
  * See LICENSE in the project root for license information.
  */
 
-/* global Office */
+/* global console,  Excel, Office */
 
 Office.onReady(() => {
   // If needed, Office.js is ready to be called.
@@ -13,20 +13,32 @@ Office.onReady(() => {
  * Shows a notification when the add-in command is executed.
  * @param event
  */
-function action(event: Office.AddinCommands.Event) {
-  const message: Office.NotificationMessageDetails = {
-    type: Office.MailboxEnums.ItemNotificationMessageType.InformationalMessage,
-    message: "Performed action.",
-    icon: "Icon.80x80",
-    persistent: true,
-  };
+async function resetSheet(event: Office.AddinCommands.Event) {
+  try {
+    await Excel.run(async (context) => {
+      const activeSheet = context.workbook.worksheets.getActiveWorksheet();
+      const newSheet = context.workbook.worksheets.add();
 
-  // Show a notification message.
-  Office.context.mailbox.item.notificationMessages.replaceAsync("ActionPerformanceNotification", message);
+      activeSheet.load("name");
+
+      await context.sync();
+
+      const sheetName = activeSheet.name;
+
+      activeSheet.delete();
+      newSheet.name = sheetName;
+      newSheet.activate();
+
+      await context.sync();
+    });
+  } catch (error) {
+    // Note: In a production add-in, notify the user through your add-in's UI.
+    console.error(error);
+  }
 
   // Be sure to indicate when the add-in command function is complete.
   event.completed();
 }
 
 // Register the function with Office.
-Office.actions.associate("action", action);
+Office.actions.associate("resetSheet", resetSheet);
