@@ -15,19 +15,36 @@ Office.onReady(() => {
 export async function run() {
   try {
     await Excel.run(async (context) => {
-      /**
-       * Insert your Excel code here
-       */
-      const range = context.workbook.getSelectedRange();
+      const sheet = context.workbook.worksheets.getActiveWorksheet();
+      const range = sheet.getRange();
+      range.format.rowHeight = 8;
+      range.format.columnWidth = 8;
+      await context.sync();
 
-      // Read the range address
-      range.load("address");
+      range.conditionalFormats.clearAll();
+      await context.sync();
 
-      // Update the fill color
-      range.format.fill.color = "yellow";
+      const rule = range.conditionalFormats.add(Excel.ConditionalFormatType.colorScale);
+
+      rule.colorScale.criteria = {
+        minimum: {
+          formula: null,
+          type: Excel.ConditionalFormatColorCriterionType.lowestValue,
+          color: "white",
+        },
+        midpoint: {
+          formula: "50",
+          type: Excel.ConditionalFormatColorCriterionType.percent,
+          color: "gray",
+        },
+        maximum: {
+          formula: null,
+          type: Excel.ConditionalFormatColorCriterionType.highestValue,
+          color: "black",
+        },
+      };
 
       await context.sync();
-      console.log(`The range address was ${range.address}.`);
     });
   } catch (error) {
     console.error(error);
